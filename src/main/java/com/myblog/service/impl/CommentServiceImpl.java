@@ -55,12 +55,9 @@ public class CommentServiceImpl implements CommentService {
     public Comment updateComment(Long commentId, UpdateCommentRequest request) {
         log.debug("Updating comment with id: {}", commentId);
 
-        Optional<Comment> existingComment = commentDao.findById(commentId);
-        if (existingComment.isEmpty()) {
-            throw new IllegalArgumentException("Comment not found with id: " + commentId);
-        }
+        Comment comment = commentDao.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("Comment not found with id: " + commentId));
 
-        Comment comment = existingComment.get();
         comment.setText(request.getText());
         return commentDao.update(comment);
     }
@@ -70,10 +67,8 @@ public class CommentServiceImpl implements CommentService {
     public void deleteComment(Long commentId) {
         log.debug("Deleting comment with id: {}", commentId);
 
-        Optional<Comment> existingComment = commentDao.findById(commentId);
-        if (existingComment.isEmpty()) {
-            throw new IllegalArgumentException("Comment not found with id: " + commentId);
-        }
+        commentDao.findById(commentId)
+                .orElseThrow(() -> new IllegalArgumentException("Comment not found with id: " + commentId));
 
         commentDao.delete(commentId);
     }

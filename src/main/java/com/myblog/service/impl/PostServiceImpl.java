@@ -60,13 +60,10 @@ public class PostServiceImpl implements PostService {
     @Transactional
     public Post updatePost(Long id, UpdatePostRequest request) {
         log.debug("Updating post with id: {}", id);
-        
-        Optional<Post> existingPost = postDao.findById(id);
-        if (existingPost.isEmpty()) {
-            throw new IllegalArgumentException("Post not found with id: " + id);
-        }
-        
-        Post post = existingPost.get();
+
+        Post post = postDao.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
+
         post.setTitle(request.getTitle());
         post.setText(request.getText());
         post.setTags(request.getTags());
@@ -79,10 +76,8 @@ public class PostServiceImpl implements PostService {
     public void deletePost(Long id) {
         log.debug("Deleting post with id: {}", id);
 
-        Optional<Post> existingPost = postDao.findById(id);
-        if (existingPost.isEmpty()) {
-            throw new IllegalArgumentException("Post not found with id: " + id);
-        }
+        postDao.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
 
         postDao.delete(id);
     }
@@ -92,14 +87,12 @@ public class PostServiceImpl implements PostService {
     public int incrementLikes(Long id) {
         log.debug("Incrementing likes for post with id: {}", id);
 
-        Optional<Post> existingPost = postDao.findById(id);
-        if (existingPost.isEmpty()) {
-            throw new IllegalArgumentException("Post not found with id: " + id);
-        }
+        Post post = postDao.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
 
         postDao.incrementLikes(id);
 
-        return existingPost.get().getLikesCount() + 1;
+        return post.getLikesCount() + 1;
     }
 
     @Override
@@ -107,12 +100,11 @@ public class PostServiceImpl implements PostService {
     public int decrementLikes(Long id) {
         log.debug("Decrementing likes for post with id: {}", id);
 
-        Optional<Post> existingPost = postDao.findById(id);
-        if (existingPost.isEmpty()) {
-            throw new IllegalArgumentException("Post not found with id: " + id);
-        }
+        Post post = postDao.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
 
-        int currentLikes = existingPost.get().getLikesCount();
+
+        int currentLikes = post.getLikesCount();
         if (currentLikes > 0) {
             postDao.decrementLikes(id);
             return currentLikes - 1;

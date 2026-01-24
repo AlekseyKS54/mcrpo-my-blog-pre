@@ -88,20 +88,34 @@ public class PostServiceImpl implements PostService {
     @Transactional
     public int incrementLikes(Long id) {
         log.debug("Incrementing likes for post with id: {}", id);
+
+        Optional<Post> existingPost = postDao.findById(id);
+        if (existingPost.isEmpty()) {
+            throw new IllegalArgumentException("Post not found with id: " + id);
+        }
+
         postDao.incrementLikes(id);
-        
-        Optional<Post> post = postDao.findById(id);
-        return post.map(Post::getLikesCount).orElse(0);
+
+        return existingPost.get().getLikesCount() + 1;
     }
 
     @Override
     @Transactional
     public int decrementLikes(Long id) {
-        // TODO: Реализовать уменьшение лайков
-        // 1. Вызвать postDao.decrementLikes(id)
-        // 2. Получить обновлённый пост через postDao.findById(id)
-        // 3. Вернуть новое значение likesCount
-        throw new UnsupportedOperationException("TODO: Implement decrementLikes");
+        log.debug("Decrementing likes for post with id: {}", id);
+
+        Optional<Post> existingPost = postDao.findById(id);
+        if (existingPost.isEmpty()) {
+            throw new IllegalArgumentException("Post not found with id: " + id);
+        }
+
+        int currentLikes = existingPost.get().getLikesCount();
+        if (currentLikes > 0) {
+            postDao.decrementLikes(id);
+            return currentLikes - 1;
+        }
+
+        return 0;
     }
 
     @Override

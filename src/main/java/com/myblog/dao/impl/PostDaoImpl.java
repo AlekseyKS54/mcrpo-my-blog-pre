@@ -160,10 +160,8 @@ public class PostDaoImpl implements PostDao {
 
     @Override
     public void decrementLikes(Long id) {
-        // TODO: Реализовать уменьшение счётчика лайков на 1
-        // Используйте GREATEST(likes_count - 1, 0) чтобы не уйти в минус
-        // Пример SQL: UPDATE posts SET likes_count = GREATEST(likes_count - 1, 0) WHERE id = ?
-        throw new UnsupportedOperationException("TODO: Implement decrementLikes");
+        String sql = "UPDATE posts SET likes_count = likes_count - 1 WHERE id = ?";
+        jdbcTemplate.update(sql, id);
     }
 
     @Override

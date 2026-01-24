@@ -88,16 +88,23 @@ public class PostController {
     @PostMapping("/{id}/likes")
     public ResponseEntity<Integer> incrementLikes(@PathVariable Long id) {
         log.debug("POST /api/posts/{}/likes", id);
-        int likesCount = postService.incrementLikes(id);
-        return ResponseEntity.ok(likesCount);
+        try {
+            int likesCount = postService.incrementLikes(id);
+            return ResponseEntity.ok(likesCount);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}/likes")
     public ResponseEntity<Integer> removeLike(@PathVariable Long id) {
-        // TODO: Реализовать удаление лайка
-        // 1. Вызвать postService.decrementLikes(id)
-        // 2. Вернуть ResponseEntity.ok() с новым количеством лайков
-        throw new UnsupportedOperationException("TODO: Implement removeLike");
+        log.debug("DELETE /api/posts/{}/likes", id);
+        try {
+            int likesCount = postService.decrementLikes(id);
+            return ResponseEntity.ok(likesCount);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PutMapping("/{id}/image")

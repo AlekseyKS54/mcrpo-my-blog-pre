@@ -142,14 +142,21 @@ public class PostDaoImpl implements PostDao {
 
     @Override
     public void delete(Long id) {
-        // TODO: Реализовать каскадное удаление поста
-        // Порядок удаления:
-        // 1. Удалить все комментарии: DELETE FROM comments WHERE post_id = ?
-        // 2. Удалить все связи с тегами: DELETE FROM post_tags WHERE post_id = ?
-        // 3. Удалить изображение: DELETE FROM post_images WHERE post_id = ?
-        // 4. Удалить сам пост: DELETE FROM posts WHERE id = ?
-        // ВАЖНО: Используйте @Transactional в сервисе для атомарности операции!
-        throw new UnsupportedOperationException("TODO: Implement cascade delete");
+        // Удалить все комментарии
+        String deleteComments = "DELETE FROM comments WHERE post_id = ?";
+        jdbcTemplate.update(deleteComments, id);
+
+        // Удалить все связи с тегами
+        String deletePostTags = "DELETE FROM post_tags WHERE post_id = ?";
+        jdbcTemplate.update(deletePostTags, id);
+
+        // Удалить изображение
+        String deleteImage = "DELETE FROM post_images WHERE post_id = ?";
+        jdbcTemplate.update(deleteImage, id);
+
+        // Удалить сам пост
+        String deletePost = "DELETE FROM posts WHERE id = ?";
+        jdbcTemplate.update(deletePost, id);
     }
 
     @Override

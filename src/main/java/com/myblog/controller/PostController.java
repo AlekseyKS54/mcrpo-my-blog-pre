@@ -78,11 +78,14 @@ public class PostController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePost(@PathVariable Long id) {
-        // TODO: Реализовать удаление поста
-        // 1. Вызвать postService.deletePost(id)
-        // 2. Вернуть ResponseEntity.ok().build()
-        // Подсказка: посмотрите на метод createPost как пример
-        throw new UnsupportedOperationException("TODO: Implement deletePost");
+        log.debug("DELETE /api/posts/{}", id);
+
+        try {
+            postService.deletePost(id);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @PostMapping("/{id}/likes")

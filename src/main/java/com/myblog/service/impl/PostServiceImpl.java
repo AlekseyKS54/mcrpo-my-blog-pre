@@ -77,11 +77,14 @@ public class PostServiceImpl implements PostService {
     @Override
     @Transactional
     public void deletePost(Long id) {
-        // TODO: Реализовать удаление поста
-        // 1. Вызвать postDao.delete(id)
-        // ВАЖНО: Метод уже помечен @Transactional - это обеспечит атомарность каскадного удаления
-        // Подсказка: посмотрите на метод createPost как пример
-        throw new UnsupportedOperationException("TODO: Implement deletePost");
+        log.debug("Deleting post with id: {}", id);
+
+        Optional<Post> existingPost = postDao.findById(id);
+        if (existingPost.isEmpty()) {
+            throw new IllegalArgumentException("Post not found with id: " + id);
+        }
+
+        postDao.delete(id);
     }
 
     @Override

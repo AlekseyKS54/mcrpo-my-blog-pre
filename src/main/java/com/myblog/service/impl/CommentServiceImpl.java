@@ -4,6 +4,7 @@ import com.myblog.dao.CommentDao;
 import com.myblog.dto.CreateCommentRequest;
 import com.myblog.dto.UpdateCommentRequest;
 import com.myblog.model.Comment;
+import com.myblog.model.Post;
 import com.myblog.service.CommentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,22 +53,29 @@ public class CommentServiceImpl implements CommentService {
     @Override
     @Transactional
     public Comment updateComment(Long commentId, UpdateCommentRequest request) {
-        // TODO: Реализовать обновление комментария
-        // 1. Проверить существование комментария через commentDao.findById(commentId)
-        // 2. Если комментарий не найден - выбросить IllegalArgumentException
-        // 3. Обновить текст комментария: comment.setText(request.getText())
-        // 4. Вызвать commentDao.update(comment)
-        // 5. Вернуть обновлённый комментарий
-        throw new UnsupportedOperationException("TODO: Implement updateComment");
+        log.debug("Updating comment with id: {}", commentId);
+
+        Optional<Comment> existingComment = commentDao.findById(commentId);
+        if (existingComment.isEmpty()) {
+            throw new IllegalArgumentException("Comment not found with id: " + commentId);
+        }
+
+        Comment comment = existingComment.get();
+        comment.setText(request.getText());
+        return commentDao.update(comment);
     }
 
     @Override
     @Transactional
     public void deleteComment(Long commentId) {
-        // TODO: Реализовать удаление комментария
-        // 1. Вызвать commentDao.delete(commentId)
-        // Подсказка: посмотрите на метод createComment как пример
-        throw new UnsupportedOperationException("TODO: Implement deleteComment");
+        log.debug("Deleting comment with id: {}", commentId);
+
+        Optional<Comment> existingComment = commentDao.findById(commentId);
+        if (existingComment.isEmpty()) {
+            throw new IllegalArgumentException("Comment not found with id: " + commentId);
+        }
+
+        commentDao.delete(commentId);
     }
 }
 

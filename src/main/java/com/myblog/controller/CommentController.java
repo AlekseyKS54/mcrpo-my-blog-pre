@@ -57,24 +57,30 @@ public class CommentController {
             @PathVariable Long postId,
             @PathVariable Long commentId,
             @RequestBody UpdateCommentRequest request) {
-        
-        // TODO: Реализовать обновление комментария
-        // 1. Вызвать commentService.updateComment(commentId, request)
-        // 2. Обработать исключение IllegalArgumentException -> вернуть 404
-        // 3. При успехе вернуть ResponseEntity.ok(updatedComment)
-        // Подсказка: посмотрите на PostController.updatePost как пример
-        throw new UnsupportedOperationException("TODO: Implement updateComment");
+
+        log.debug("PUT /api/posts/{}/comments/{} - text: {}", postId, commentId, request.getText());
+
+        try {
+            Comment updatedComment = commentService.updateComment(commentId, request);
+            return ResponseEntity.ok(updatedComment);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{commentId}")
     public ResponseEntity<Void> deleteComment(
             @PathVariable Long postId,
             @PathVariable Long commentId) {
-        
-        // TODO: Реализовать удаление комментария
-        // 1. Вызвать commentService.deleteComment(commentId)
-        // 2. Вернуть ResponseEntity.ok().build()
-        throw new UnsupportedOperationException("TODO: Implement deleteComment");
+
+        log.debug("DELETE /api/posts/{}/comments/{}", postId, commentId);
+
+        try {
+            commentService.deleteComment(commentId);
+            return ResponseEntity.ok().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
 

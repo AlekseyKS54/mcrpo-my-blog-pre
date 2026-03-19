@@ -6,11 +6,6 @@
 target/
 *.log
 
-# Maven
-.mvn/
-mvnw
-mvnw.cmd
-
 # Node
 node_modules/
 npm-debug.log*

@@ -1,7 +1,5 @@
-package com.myblog.dao.impl;
+package com.myblog.repository;
 
-import com.myblog.dao.PostDao;
-import com.myblog.dao.TagDao;
 import com.myblog.model.Post;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,25 +10,24 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class PostDaoImpl implements PostDao {
+public class PostRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(PostDaoImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(PostRepository.class);
+
     private final JdbcTemplate jdbcTemplate;
-    private final TagDao tagDao;
+    private final TagRepository tagRepository;
 
-    public PostDaoImpl(JdbcTemplate jdbcTemplate, TagDao tagDao) {
+    public PostRepository(JdbcTemplate jdbcTemplate, TagRepository tagRepository) {
         this.jdbcTemplate = jdbcTemplate;
-        this.tagDao = tagDao;
+        this.tagRepository = tagRepository;
     }
 
-    @Override
     public Post create(Post post) {
         String sql = "INSERT INTO posts (title, text, likes_count) VALUES (?, ?, 0)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -55,18 +52,17 @@ public class PostDaoImpl implements PostDao {
         return findById(postId).orElse(post);
     }
 
-    @Override
     public Optional<Post> findById(Long id) {
         String sql = "SELECT p.id, p.title, p.text, p.likes_count, p.created_at, p.updated_at, " +
-                     "(SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comments_count " +
-                     "FROM posts p WHERE p.id = ?";
-        
+                "(SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comments_count " +
+                "FROM posts p WHERE p.id = ?";
+
         try {
-            Post post = jdbcTemplate.queryForObject(sql, new PostRowMapper(), id);
+            Post post = jdbcTemplate.queryForObject(sql, postRowMapper, id);
             if (post != null) {
-                post.setTags(tagDao.findByPostId(id).stream()
-                    .map(tag -> tag.getName())
-                    .toList());
+                post.setTags(tagRepository.findByPostId(id).stream()
+                        .map(tag -> tag.getName())
+                        .toList());
             }
             return Optional.ofNullable(post);
         } catch (Exception e) {
@@ -75,15 +71,14 @@ public class PostDaoImpl implements PostDao {
         }
     }
 
-    @Override
     public List<Post> findAll(String search, int pageNumber, int pageSize) {
         List<String> tags = new ArrayList<>();
         String titleSearch = parseSearchQuery(search, tags);
 
         StringBuilder sql = new StringBuilder(
-            "SELECT p.id, p.title, p.text, p.likes_count, p.created_at, p.updated_at, " +
-            "(SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comments_count " +
-            "FROM posts p WHERE 1=1"
+                "SELECT p.id, p.title, p.text, p.likes_count, p.created_at, p.updated_at, " +
+                        "(SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) as comments_count " +
+                        "FROM posts p WHERE 1=1"
         );
 
         List<Object> params = new ArrayList<>();
@@ -98,8 +93,8 @@ public class PostDaoImpl implements PostDao {
         if (!tags.isEmpty()) {
             for (int i = 0; i < tags.size(); i++) {
                 sql.append(" AND EXISTS (SELECT 1 FROM post_tags pt " +
-                          "JOIN tags t ON pt.tag_id = t.id " +
-                          "WHERE pt.post_id = p.id AND t.name = ?)");
+                        "JOIN tags t ON pt.tag_id = t.id " +
+                        "WHERE pt.post_id = p.id AND t.name = ?)");
                 params.add(tags.get(i));
             }
         }
@@ -109,14 +104,14 @@ public class PostDaoImpl implements PostDao {
         params.add(pageSize);
         params.add((pageNumber - 1) * pageSize);
 
-        List<Post> posts = jdbcTemplate.query(sql.toString(), new PostRowMapper(), params.toArray());
+        List<Post> posts = jdbcTemplate.query(sql.toString(), postRowMapper, params.toArray());
 
         // Загрузить теги для каждого поста
         for (Post post : posts) {
-            post.setTags(tagDao.findByPostId(post.getId()).stream()
-                .map(tag -> tag.getName())
-                .toList());
-            
+            post.setTags(tagRepository.findByPostId(post.getId()).stream()
+                    .map(tag -> tag.getName())
+                    .toList());
+
             // Обрезать текст до 128 символов для списка
             if (post.getText().length() > 128) {
                 post.setText(post.getText().substring(0, 128) + "…");
@@ -126,13 +121,12 @@ public class PostDaoImpl implements PostDao {
         return posts;
     }
 
-    @Override
     public Post update(Post post) {
         String sql = "UPDATE posts SET title = ?, text = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
         jdbcTemplate.update(sql, post.getTitle(), post.getText(), post.getId());
 
         // Обновить теги
-        tagDao.unlinkAllTagsFromPost(post.getId());
+        tagRepository.unlinkAllTagsFromPost(post.getId());
         if (post.getTags() != null && !post.getTags().isEmpty()) {
             saveTags(post.getId(), post.getTags());
         }
@@ -140,7 +134,6 @@ public class PostDaoImpl implements PostDao {
         return findById(post.getId()).orElse(post);
     }
 
-    @Override
     public void delete(Long id) {
         // Удалить все комментарии
         String deleteComments = "DELETE FROM comments WHERE post_id = ?";
@@ -159,19 +152,16 @@ public class PostDaoImpl implements PostDao {
         jdbcTemplate.update(deletePost, id);
     }
 
-    @Override
     public void incrementLikes(Long id) {
         String sql = "UPDATE posts SET likes_count = likes_count + 1 WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
 
-    @Override
     public void decrementLikes(Long id) {
         String sql = "UPDATE posts SET likes_count = likes_count - 1 WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
 
-    @Override
     public int getTotalCount(String search) {
         List<String> tags = new ArrayList<>();
         String titleSearch = parseSearchQuery(search, tags);
@@ -187,8 +177,8 @@ public class PostDaoImpl implements PostDao {
         if (!tags.isEmpty()) {
             for (int i = 0; i < tags.size(); i++) {
                 sql.append(" AND EXISTS (SELECT 1 FROM post_tags pt " +
-                          "JOIN tags t ON pt.tag_id = t.id " +
-                          "WHERE pt.post_id = p.id AND t.name = ?)");
+                        "JOIN tags t ON pt.tag_id = t.id " +
+                        "WHERE pt.post_id = p.id AND t.name = ?)");
                 params.add(tags.get(i));
             }
         }
@@ -197,7 +187,6 @@ public class PostDaoImpl implements PostDao {
         return count != null ? count : 0;
     }
 
-    @Override
     public void saveImage(Long postId, byte[] imageData, String contentType) {
         String deleteSql = "DELETE FROM post_images WHERE post_id = ?";
         jdbcTemplate.update(deleteSql, postId);
@@ -206,7 +195,6 @@ public class PostDaoImpl implements PostDao {
         jdbcTemplate.update(insertSql, postId, imageData, contentType);
     }
 
-    @Override
     public Optional<byte[]> getImage(Long postId) {
         String sql = "SELECT image_data FROM post_images WHERE post_id = ?";
         try {
@@ -217,7 +205,6 @@ public class PostDaoImpl implements PostDao {
         }
     }
 
-    @Override
     public Optional<String> getImageContentType(Long postId) {
         String sql = "SELECT content_type FROM post_images WHERE post_id = ?";
         try {
@@ -233,22 +220,22 @@ public class PostDaoImpl implements PostDao {
             if (tagName == null || tagName.trim().isEmpty()) {
                 continue;
             }
-            
+
             // Удалить # если есть
             String cleanTagName = tagName.startsWith("#") ? tagName.substring(1) : tagName;
-            
+
             // Найти или создать тег
-            Optional<com.myblog.model.Tag> existingTag = tagDao.findByName(cleanTagName);
+            Optional<com.myblog.model.Tag> existingTag = tagRepository.findByName(cleanTagName);
             Long tagId;
             if (existingTag.isPresent()) {
                 tagId = existingTag.get().getId();
             } else {
-                com.myblog.model.Tag newTag = tagDao.create(cleanTagName);
+                com.myblog.model.Tag newTag = tagRepository.create(cleanTagName);
                 tagId = newTag.getId();
             }
-            
+
             // Связать тег с постом
-            tagDao.linkTagToPost(tagId, postId);
+            tagRepository.linkTagToPost(tagId, postId);
         }
     }
 
@@ -264,7 +251,7 @@ public class PostDaoImpl implements PostDao {
             if (word.isEmpty()) {
                 continue;
             }
-            
+
             if (word.startsWith("#")) {
                 // Это тег
                 String tagName = word.substring(1);
@@ -283,19 +270,14 @@ public class PostDaoImpl implements PostDao {
         return titleSearch.toString();
     }
 
-    private static class PostRowMapper implements RowMapper<Post> {
-        @Override
-        public Post mapRow(ResultSet rs, int rowNum) throws SQLException {
-            Post post = new Post();
-            post.setId(rs.getLong("id"));
-            post.setTitle(rs.getString("title"));
-            post.setText(rs.getString("text"));
-            post.setLikesCount(rs.getInt("likes_count"));
-            post.setCommentsCount(rs.getInt("comments_count"));
-            post.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-            post.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
-            return post;
-        }
-    }
-}
+    private final RowMapper<Post> postRowMapper = (rs, rowNum) -> new Post(
+            rs.getLong("id"),
+            rs.getString("title"),
+            rs.getString("text"),
+            rs.getInt("likes_count"),
+            rs.getInt("comments_count"),
+            rs.getObject("created_at", LocalDateTime.class),
+            rs.getObject("updated_at", LocalDateTime.class)
+    );
 
+}

@@ -1,6 +1,5 @@
-package com.myblog.dao.impl;
+package com.myblog.repository;
 
-import com.myblog.dao.CommentDao;
 import com.myblog.model.Comment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,22 +10,21 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class CommentDaoImpl implements CommentDao {
+public class CommentRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(CommentDaoImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(CommentRepository.class);
+
     private final JdbcTemplate jdbcTemplate;
 
-    public CommentDaoImpl(JdbcTemplate jdbcTemplate) {
+    public CommentRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    @Override
     public Comment create(Comment comment) {
         String sql = "INSERT INTO comments (text, post_id) VALUES (?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -44,11 +42,10 @@ public class CommentDaoImpl implements CommentDao {
         return findById(commentId).orElse(comment);
     }
 
-    @Override
     public Optional<Comment> findById(Long id) {
         String sql = "SELECT id, text, post_id, created_at, updated_at FROM comments WHERE id = ?";
         try {
-            Comment comment = jdbcTemplate.queryForObject(sql, new CommentRowMapper(), id);
+            Comment comment = jdbcTemplate.queryForObject(sql, commntRowMapper, id);
             return Optional.ofNullable(comment);
         } catch (Exception e) {
             log.debug("Comment not found with id: {}", id);
@@ -56,43 +53,33 @@ public class CommentDaoImpl implements CommentDao {
         }
     }
 
-    @Override
     public List<Comment> findByPostId(Long postId) {
         String sql = "SELECT id, text, post_id, created_at, updated_at FROM comments WHERE post_id = ? ORDER BY created_at ASC";
-        return jdbcTemplate.query(sql, new CommentRowMapper(), postId);
+        return jdbcTemplate.query(sql, commntRowMapper, postId);
     }
 
-    @Override
     public Comment update(Comment comment) {
         String sql = "UPDATE comments SET text = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?";
         jdbcTemplate.update(sql, comment.getText(), comment.getId());
         return findById(comment.getId()).orElse(comment);
     }
 
-    @Override
     public void delete(Long id) {
         String sql = "DELETE FROM comments WHERE id = ?";
         jdbcTemplate.update(sql, id);
     }
 
-    @Override
     public int countByPostId(Long postId) {
         String sql = "SELECT COUNT(*) FROM comments WHERE post_id = ?";
         Integer count = jdbcTemplate.queryForObject(sql, Integer.class, postId);
         return count != null ? count : 0;
     }
 
-    private static class CommentRowMapper implements RowMapper<Comment> {
-        @Override
-        public Comment mapRow(ResultSet rs, int rowNum) throws SQLException {
-            Comment comment = new Comment();
-            comment.setId(rs.getLong("id"));
-            comment.setText(rs.getString("text"));
-            comment.setPostId(rs.getLong("post_id"));
-            comment.setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime());
-            comment.setUpdatedAt(rs.getTimestamp("updated_at").toLocalDateTime());
-            return comment;
-        }
-    }
+    private final RowMapper<Comment> commntRowMapper = (rs, rowNum) -> new Comment(
+            rs.getLong("id"),
+            rs.getString("text"),
+            rs.getLong("post_id"),
+            rs.getObject("created_at", LocalDateTime.class),
+            rs.getObject("updated_at", LocalDateTime.class)
+    );
 }
-

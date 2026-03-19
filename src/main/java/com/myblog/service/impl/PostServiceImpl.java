@@ -1,10 +1,10 @@
 package com.myblog.service.impl;
 
-import com.myblog.dao.PostDao;
 import com.myblog.dto.CreatePostRequest;
 import com.myblog.dto.PostListResponse;
 import com.myblog.dto.UpdatePostRequest;
 import com.myblog.model.Post;
+import com.myblog.repository.PostRepository;
 import com.myblog.service.PostService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,10 +18,10 @@ import java.util.Optional;
 public class PostServiceImpl implements PostService {
 
     private static final Logger log = LoggerFactory.getLogger(PostServiceImpl.class);
-    private final PostDao postDao;
+    private final PostRepository postRepository;
 
-    public PostServiceImpl(PostDao postDao) {
-        this.postDao = postDao;
+    public PostServiceImpl(PostRepository postRepository) {
+        this.postRepository = postRepository;
     }
 
     @Override
@@ -29,8 +29,8 @@ public class PostServiceImpl implements PostService {
     public PostListResponse getPosts(String search, int pageNumber, int pageSize) {
         log.debug("Getting posts with search: {}, page: {}, size: {}", search, pageNumber, pageSize);
         
-        List<Post> posts = postDao.findAll(search, pageNumber, pageSize);
-        int totalCount = postDao.getTotalCount(search);
+        List<Post> posts = postRepository.findAll(search, pageNumber, pageSize);
+        int totalCount = postRepository.getTotalCount(search);
         int lastPage = (int) Math.ceil((double) totalCount / pageSize);
         
         return new PostListResponse(posts, pageNumber > 1, pageNumber < lastPage, lastPage);
@@ -40,7 +40,7 @@ public class PostServiceImpl implements PostService {
     @Transactional(readOnly = true)
     public Optional<Post> getPostById(Long id) {
         log.debug("Getting post by id: {}", id);
-        return postDao.findById(id);
+        return postRepository.findById(id);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class PostServiceImpl implements PostService {
         post.setText(request.getText());
         post.setTags(request.getTags());
         
-        return postDao.create(post);
+        return postRepository.create(post);
     }
 
     @Override
@@ -61,14 +61,14 @@ public class PostServiceImpl implements PostService {
     public Post updatePost(Long id, UpdatePostRequest request) {
         log.debug("Updating post with id: {}", id);
 
-        Post post = postDao.findById(id)
+        Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
 
         post.setTitle(request.getTitle());
         post.setText(request.getText());
         post.setTags(request.getTags());
         
-        return postDao.update(post);
+        return postRepository.update(post);
     }
 
     @Override
@@ -76,10 +76,10 @@ public class PostServiceImpl implements PostService {
     public void deletePost(Long id) {
         log.debug("Deleting post with id: {}", id);
 
-        postDao.findById(id)
+        postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
 
-        postDao.delete(id);
+        postRepository.delete(id);
     }
 
     @Override
@@ -87,10 +87,10 @@ public class PostServiceImpl implements PostService {
     public int incrementLikes(Long id) {
         log.debug("Incrementing likes for post with id: {}", id);
 
-        Post post = postDao.findById(id)
+        Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
 
-        postDao.incrementLikes(id);
+        postRepository.incrementLikes(id);
 
         return post.getLikesCount() + 1;
     }
@@ -100,13 +100,13 @@ public class PostServiceImpl implements PostService {
     public int decrementLikes(Long id) {
         log.debug("Decrementing likes for post with id: {}", id);
 
-        Post post = postDao.findById(id)
+        Post post = postRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Post not found with id: " + id));
 
 
         int currentLikes = post.getLikesCount();
         if (currentLikes > 0) {
-            postDao.decrementLikes(id);
+            postRepository.decrementLikes(id);
             return currentLikes - 1;
         }
 
@@ -117,20 +117,20 @@ public class PostServiceImpl implements PostService {
     @Transactional
     public void saveImage(Long postId, byte[] imageData, String contentType) {
         log.debug("Saving image for post with id: {}", postId);
-        postDao.saveImage(postId, imageData, contentType);
+        postRepository.saveImage(postId, imageData, contentType);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<byte[]> getImage(Long postId) {
         log.debug("Getting image for post with id: {}", postId);
-        return postDao.getImage(postId);
+        return postRepository.getImage(postId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<String> getImageContentType(Long postId) {
-        return postDao.getImageContentType(postId);
+        return postRepository.getImageContentType(postId);
     }
 }
 

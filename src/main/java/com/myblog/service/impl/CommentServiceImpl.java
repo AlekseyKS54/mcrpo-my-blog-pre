@@ -1,10 +1,9 @@
 package com.myblog.service.impl;
 
-import com.myblog.dao.CommentDao;
 import com.myblog.dto.CreateCommentRequest;
 import com.myblog.dto.UpdateCommentRequest;
 import com.myblog.model.Comment;
-import com.myblog.model.Post;
+import com.myblog.repository.CommentRepository;
 import com.myblog.service.CommentService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,24 +17,25 @@ import java.util.Optional;
 public class CommentServiceImpl implements CommentService {
 
     private static final Logger log = LoggerFactory.getLogger(CommentServiceImpl.class);
-    private final CommentDao commentDao;
 
-    public CommentServiceImpl(CommentDao commentDao) {
-        this.commentDao = commentDao;
+    private final CommentRepository commentRepository;
+
+    public CommentServiceImpl(CommentRepository commentRepository) {
+        this.commentRepository = commentRepository;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Comment> getCommentsByPostId(Long postId) {
         log.debug("Getting comments for post with id: {}", postId);
-        return commentDao.findByPostId(postId);
+        return commentRepository.findByPostId(postId);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Optional<Comment> getCommentById(Long commentId) {
         log.debug("Getting comment by id: {}", commentId);
-        return commentDao.findById(commentId);
+        return commentRepository.findById(commentId);
     }
 
     @Override
@@ -47,7 +47,7 @@ public class CommentServiceImpl implements CommentService {
         comment.setText(request.getText());
         comment.setPostId(request.getPostId());
         
-        return commentDao.create(comment);
+        return commentRepository.create(comment);
     }
 
     @Override
@@ -55,11 +55,11 @@ public class CommentServiceImpl implements CommentService {
     public Comment updateComment(Long commentId, UpdateCommentRequest request) {
         log.debug("Updating comment with id: {}", commentId);
 
-        Comment comment = commentDao.findById(commentId)
+        Comment comment = commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found with id: " + commentId));
 
         comment.setText(request.getText());
-        return commentDao.update(comment);
+        return commentRepository.update(comment);
     }
 
     @Override
@@ -67,10 +67,10 @@ public class CommentServiceImpl implements CommentService {
     public void deleteComment(Long commentId) {
         log.debug("Deleting comment with id: {}", commentId);
 
-        commentDao.findById(commentId)
+        commentRepository.findById(commentId)
                 .orElseThrow(() -> new IllegalArgumentException("Comment not found with id: " + commentId));
 
-        commentDao.delete(commentId);
+        commentRepository.delete(commentId);
     }
 }
 

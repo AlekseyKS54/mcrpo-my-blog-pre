@@ -1,10 +1,10 @@
 package com.myblog.service;
 
-import com.myblog.dao.PostDao;
 import com.myblog.dto.CreatePostRequest;
 import com.myblog.dto.PostListResponse;
 import com.myblog.dto.UpdatePostRequest;
 import com.myblog.model.Post;
+import com.myblog.repository.PostRepository;
 import com.myblog.service.impl.PostServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 class PostServiceTest {
 
     @Mock
-    private PostDao postDao;
+    private PostRepository postRepository;
 
     @InjectMocks
     private PostServiceImpl postService;
@@ -47,8 +47,8 @@ class PostServiceTest {
     void testGetPosts() {
         // Given
         List<Post> posts = Arrays.asList(testPost);
-        when(postDao.findAll(anyString(), anyInt(), anyInt())).thenReturn(posts);
-        when(postDao.getTotalCount(anyString())).thenReturn(1);
+        when(postRepository.findAll(anyString(), anyInt(), anyInt())).thenReturn(posts);
+        when(postRepository.getTotalCount(anyString())).thenReturn(1);
 
         // When
         PostListResponse response = postService.getPosts("", 1, 10);
@@ -61,14 +61,14 @@ class PostServiceTest {
         assertFalse(response.isHasNext());
         assertEquals(1, response.getLastPage());
         
-        verify(postDao).findAll("", 1, 10);
-        verify(postDao).getTotalCount("");
+        verify(postRepository).findAll("", 1, 10);
+        verify(postRepository).getTotalCount("");
     }
 
     @Test
     void testGetPostById() {
         // Given
-        when(postDao.findById(1L)).thenReturn(Optional.of(testPost));
+        when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
 
         // When
         Optional<Post> result = postService.getPostById(1L);
@@ -78,7 +78,7 @@ class PostServiceTest {
         assertEquals(testPost.getId(), result.get().getId());
         assertEquals(testPost.getTitle(), result.get().getTitle());
         
-        verify(postDao).findById(1L);
+        verify(postRepository).findById(1L);
     }
 
     @Test
@@ -89,7 +89,7 @@ class PostServiceTest {
         request.setText("New content");
         request.setTags(Arrays.asList("tag1"));
         
-        when(postDao.create(any(Post.class))).thenReturn(testPost);
+        when(postRepository.create(any(Post.class))).thenReturn(testPost);
 
         // When
         Post result = postService.createPost(request);
@@ -98,7 +98,7 @@ class PostServiceTest {
         assertNotNull(result);
         assertEquals(testPost.getId(), result.getId());
         
-        verify(postDao).create(any(Post.class));
+        verify(postRepository).create(any(Post.class));
     }
 
     @Test
@@ -110,8 +110,8 @@ class PostServiceTest {
         request.setText("Updated content");
         request.setTags(Arrays.asList("tag1"));
         
-        when(postDao.findById(1L)).thenReturn(Optional.of(testPost));
-        when(postDao.update(any(Post.class))).thenReturn(testPost);
+        when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
+        when(postRepository.update(any(Post.class))).thenReturn(testPost);
 
         // When
         Post result = postService.updatePost(1L, request);
@@ -119,8 +119,8 @@ class PostServiceTest {
         // Then
         assertNotNull(result);
         
-        verify(postDao).findById(1L);
-        verify(postDao).update(any(Post.class));
+        verify(postRepository).findById(1L);
+        verify(postRepository).update(any(Post.class));
     }
 
     @Test
@@ -132,24 +132,27 @@ class PostServiceTest {
         request.setText("Updated content");
         request.setTags(Arrays.asList("tag1"));
         
-        when(postDao.findById(999L)).thenReturn(Optional.empty());
+        when(postRepository.findById(999L)).thenReturn(Optional.empty());
 
         // When & Then
         assertThrows(IllegalArgumentException.class, () -> {
             postService.updatePost(999L, request);
         });
         
-        verify(postDao).findById(999L);
-        verify(postDao, never()).update(any(Post.class));
+        verify(postRepository).findById(999L);
+        verify(postRepository, never()).update(any(Post.class));
     }
 
     @Test
     void testDeletePost() {
+        // Given
+        when(postRepository.findById(1L)).thenReturn(Optional.of(testPost));
+
         // When
         postService.deletePost(1L);
 
         // Then
-        verify(postDao).delete(1L);
+        verify(postRepository).delete(1L);
     }
 
     @Test
@@ -162,16 +165,16 @@ class PostServiceTest {
         likedPost.setLikesCount(5);
         likedPost.setCommentsCount(0);
         
-        when(postDao.findById(1L)).thenReturn(Optional.of(likedPost));
+        when(postRepository.findById(1L)).thenReturn(Optional.of(likedPost));
 
         // When
         int likesCount = postService.incrementLikes(1L);
 
         // Then
-        assertEquals(5, likesCount);
+        assertEquals(6, likesCount);
         
-        verify(postDao).incrementLikes(1L);
-        verify(postDao).findById(1L);
+        verify(postRepository).incrementLikes(1L);
+        verify(postRepository).findById(1L);
     }
 }
 

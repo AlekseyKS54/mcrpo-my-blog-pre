@@ -16,10 +16,12 @@ public class Comment {
 
     public Comment() {}
 
-    public Comment(Long id, String text, Long postId) {
+    public Comment(Long id, String text, Long postId, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.text = text;
         this.postId = postId;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
     }
 
     // Getters

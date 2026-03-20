@@ -23,13 +23,15 @@ public class Post {
         this.tags = new ArrayList<>();
     }
 
-    public Post(Long id, String title, String text, List<String> tags, Integer likesCount, Integer commentsCount) {
+    public Post(Long id, String title, String text, Integer likesCount, Integer commentsCount, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.title = title;
         this.text = text;
-        this.tags = tags != null ? tags : new ArrayList<>();
         this.likesCount = likesCount;
         this.commentsCount = commentsCount;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.tags = new ArrayList<>();
     }
 
     // Getters

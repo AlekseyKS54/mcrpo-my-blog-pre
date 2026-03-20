@@ -1,6 +1,5 @@
-package com.myblog.dao.impl;
+package com.myblog.repository;
 
-import com.myblog.dao.TagDao;
 import com.myblog.model.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,22 +10,20 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
 @Repository
-public class TagDaoImpl implements TagDao {
+public class TagRepository {
 
-    private static final Logger log = LoggerFactory.getLogger(TagDaoImpl.class);
+    private static final Logger log = LoggerFactory.getLogger(TagRepository.class);
+
     private final JdbcTemplate jdbcTemplate;
 
-    public TagDaoImpl(JdbcTemplate jdbcTemplate) {
+    public TagRepository(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    @Override
     public Tag create(String tagName) {
         String sql = "INSERT INTO tags (name) VALUES (?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -44,11 +41,10 @@ public class TagDaoImpl implements TagDao {
         return tag;
     }
 
-    @Override
     public Optional<Tag> findByName(String name) {
         String sql = "SELECT id, name FROM tags WHERE name = ?";
         try {
-            Tag tag = jdbcTemplate.queryForObject(sql, new TagRowMapper(), name);
+            Tag tag = jdbcTemplate.queryForObject(sql, tagRowMapper, name);
             return Optional.ofNullable(tag);
         } catch (Exception e) {
             log.debug("Tag not found with name: {}", name);
@@ -56,34 +52,26 @@ public class TagDaoImpl implements TagDao {
         }
     }
 
-    @Override
     public List<Tag> findByPostId(Long postId) {
         String sql = "SELECT t.id, t.name FROM tags t " +
-                     "JOIN post_tags pt ON t.id = pt.tag_id " +
-                     "WHERE pt.post_id = ?";
-        return jdbcTemplate.query(sql, new TagRowMapper(), postId);
+                "JOIN post_tags pt ON t.id = pt.tag_id " +
+                "WHERE pt.post_id = ?";
+        return jdbcTemplate.query(sql, tagRowMapper, postId);
     }
 
-    @Override
     public void linkTagToPost(Long tagId, Long postId) {
         String sql = "INSERT INTO post_tags (post_id, tag_id) VALUES (?, ?)";
         jdbcTemplate.update(sql, postId, tagId);
     }
 
-    @Override
     public void unlinkAllTagsFromPost(Long postId) {
         String sql = "DELETE FROM post_tags WHERE post_id = ?";
         jdbcTemplate.update(sql, postId);
     }
 
-    private static class TagRowMapper implements RowMapper<Tag> {
-        @Override
-        public Tag mapRow(ResultSet rs, int rowNum) throws SQLException {
-            Tag tag = new Tag();
-            tag.setId(rs.getLong("id"));
-            tag.setName(rs.getString("name"));
-            return tag;
-        }
-    }
-}
 
+    private final RowMapper<Tag> tagRowMapper = (rs, rowNum) -> new Tag(
+            rs.getLong("id"),
+            rs.getString("name")
+    );
+}

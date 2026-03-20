@@ -1,9 +1,9 @@
 package com.myblog.service;
 
-import com.myblog.dao.CommentDao;
 import com.myblog.dto.CreateCommentRequest;
 import com.myblog.dto.UpdateCommentRequest;
 import com.myblog.model.Comment;
+import com.myblog.repository.CommentRepository;
 import com.myblog.service.impl.CommentServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.*;
 class CommentServiceTest {
 
     @Mock
-    private CommentDao commentDao;
+    private CommentRepository commentRepository;
 
     @InjectMocks
     private CommentServiceImpl commentService;
@@ -43,7 +43,7 @@ class CommentServiceTest {
     void testGetCommentsByPostId() {
         // Given
         List<Comment> comments = Arrays.asList(testComment);
-        when(commentDao.findByPostId(1L)).thenReturn(comments);
+        when(commentRepository.findByPostId(1L)).thenReturn(comments);
 
         // When
         List<Comment> result = commentService.getCommentsByPostId(1L);
@@ -53,13 +53,13 @@ class CommentServiceTest {
         assertEquals(1, result.size());
         assertEquals(testComment.getId(), result.get(0).getId());
         
-        verify(commentDao).findByPostId(1L);
+        verify(commentRepository).findByPostId(1L);
     }
 
     @Test
     void testGetCommentById() {
         // Given
-        when(commentDao.findById(1L)).thenReturn(Optional.of(testComment));
+        when(commentRepository.findById(1L)).thenReturn(Optional.of(testComment));
 
         // When
         Optional<Comment> result = commentService.getCommentById(1L);
@@ -68,7 +68,7 @@ class CommentServiceTest {
         assertTrue(result.isPresent());
         assertEquals(testComment.getId(), result.get().getId());
         
-        verify(commentDao).findById(1L);
+        verify(commentRepository).findById(1L);
     }
 
     @Test
@@ -78,7 +78,7 @@ class CommentServiceTest {
         request.setText("New comment");
         request.setPostId(1L);
         
-        when(commentDao.create(any(Comment.class))).thenReturn(testComment);
+        when(commentRepository.create(any(Comment.class))).thenReturn(testComment);
 
         // When
         Comment result = commentService.createComment(request);
@@ -87,7 +87,7 @@ class CommentServiceTest {
         assertNotNull(result);
         assertEquals(testComment.getId(), result.getId());
         
-        verify(commentDao).create(any(Comment.class));
+        verify(commentRepository).create(any(Comment.class));
     }
 
     @Test
@@ -98,8 +98,8 @@ class CommentServiceTest {
         request.setText("Updated comment");
         request.setPostId(1L);
         
-        when(commentDao.findById(1L)).thenReturn(Optional.of(testComment));
-        when(commentDao.update(any(Comment.class))).thenReturn(testComment);
+        when(commentRepository.findById(1L)).thenReturn(Optional.of(testComment));
+        when(commentRepository.update(any(Comment.class))).thenReturn(testComment);
 
         // When
         Comment result = commentService.updateComment(1L, request);
@@ -107,8 +107,8 @@ class CommentServiceTest {
         // Then
         assertNotNull(result);
         
-        verify(commentDao).findById(1L);
-        verify(commentDao).update(any(Comment.class));
+        verify(commentRepository).findById(1L);
+        verify(commentRepository).update(any(Comment.class));
     }
 
     @Test
@@ -119,24 +119,26 @@ class CommentServiceTest {
         request.setText("Updated comment");
         request.setPostId(1L);
         
-        when(commentDao.findById(999L)).thenReturn(Optional.empty());
+        when(commentRepository.findById(999L)).thenReturn(Optional.empty());
 
         // When & Then
         assertThrows(IllegalArgumentException.class, () -> {
             commentService.updateComment(999L, request);
         });
         
-        verify(commentDao).findById(999L);
-        verify(commentDao, never()).update(any(Comment.class));
+        verify(commentRepository).findById(999L);
+        verify(commentRepository, never()).update(any(Comment.class));
     }
 
     @Test
-    void testDeleteComment() {
+    void testDeleteComment() {        // Given
+        when(commentRepository.findById(1L)).thenReturn(Optional.of(testComment));
+
         // When
         commentService.deleteComment(1L);
 
         // Then
-        verify(commentDao).delete(1L);
+        verify(commentRepository).delete(1L);
     }
 }
 

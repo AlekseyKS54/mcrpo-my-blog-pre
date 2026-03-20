@@ -1,181 +1,163 @@
-# 🎓 My Blog - Проект для студентов
+# My Blog - Backend Application
 
-## 👋 Добро пожаловать!
+Backend-приложение для блога на Spring Boot.
 
-Это учебный проект для практики работы со **Spring Framework**.
-
-Вам предстоит **дописать недостающую функциональность** backend приложения-блога.
-
-**Репозиторий:** https://github.com/Yandex-Practicum/mcrpo-my-blog-pre
-
----
-
-## 📚 С чего начать?
-
-### 0. Клонируйте проект
-
-```bash
-git clone https://github.com/Yandex-Practicum/mcrpo-my-blog-pre.git
-cd mcrpo-my-blog-pre
-```
-
-### 1. Прочитайте задание
-
-**Откройте файл:** [`ЗАДАНИЕ_ДЛЯ_СТУДЕНТОВ.md`](./ЗАДАНИЕ_ДЛЯ_СТУДЕНТОВ.md)
-
-В нём вы найдёте:
-- ✅ Описание задания
-- ✅ Пошаговые инструкции
-- ✅ Примеры кода
-- ✅ Критерии оценки
-- ✅ Процесс сдачи работы
-
-### 2. Найдите TODO в коде
-
-```bash
-grep -r "TODO:" src/
-```
-
-Или откройте [`TODO_TASKS.md`](./TODO_TASKS.md) для краткого списка задач.
-
-### 3. Реализуйте функциональность
-
-Следуйте инструкциям в [`ЗАДАНИЕ_ДЛЯ_СТУДЕНТОВ.md`](./ЗАДАНИЕ_ДЛЯ_СТУДЕНТОВ.md).
-
-### 4. Соберите и проверьте
-
-```bash
-# Установить зависимости
-mvn clean install
-
-# Собрать проект
-mvn clean package
-
-# Запустить тесты
-mvn test
-
-# Развернуть на Tomcat
-cp target/*.war $CATALINA_HOME/webapps/ROOT.war
-catalina run
-```
-
----
-
-## 📁 Структура проекта
+## Структура проекта
 
 ```
 mcrpo-my-blog-pre/
 ├── src/main/java/com/myblog/
-│   ├── config/          # Spring конфигурация
-│   ├── controller/      # REST контроллеры (TODO здесь!)
-│   ├── service/         # Бизнес-логика (TODO здесь!)
-│   ├── dao/             # Работа с БД (TODO здесь!)
-│   ├── model/           # Модели данных
-│   └── dto/             # Data Transfer Objects
-├── src/test/           # Тесты (TODO: дописать)
-├── frontend/           # Frontend (React + Vite)
-├── pom.xml             # Maven конфигурация
-├── ЗАДАНИЕ_ДЛЯ_СТУДЕНТОВ.md  # 📖 НАЧНИТЕ ОТСЮДА!
-├── TODO_TASKS.md       # Краткий чек-лист
-└── README_СТУДЕНТЫ.md  # Техническая документация
+│   ├── controller/          # REST-контроллеры
+│   ├── service/             # Бизнес-логика
+│   ├── repository/          # Репозитории для работы с БД
+│   ├── model/               # Модели данных
+│   ├── dto/                 # Data Transfer Objects
+│   └── exception/           # Обработка исключений
+├── src/main/resources/      # Конфигурация и схема БД
+├── src/test/                # Тесты
+├── frontend/                # Frontend на React + Vite
+└── pom.xml                  # Maven конфигурация
 ```
 
----
+## Технологии
 
-## 🎯 Что нужно сделать
+- **Java 17**
+- **Spring Boot 4.0.3**
+  - Spring Web
+  - Spring Data JDBC
+- **H2 Database** (in-memory)
+- **Maven**
+- **JUnit 5 + Mockito** (тестирование)
 
-| Задание | Баллы |
-|---------|-------|
-| 1. Добавление и удаление лайков | 10 |
-| 2. Редактирование и удаление комментариев | 10 |
-| 3. Удаление поста (каскадное) | 5 |
-| 4. Unit-тесты (БОНУС) | +15 |
-| **ИТОГО** | **25-40** |
+## Сборка проекта
 
----
+### Требования
 
-## 🚀 Быстрый старт
+- JDK 17+
+- Maven 3.6+
+
+### Команды сборки
 
 ```bash
-# 1. Клонировать проект
-git clone https://github.com/Yandex-Practicum/mcrpo-my-blog-pre.git
-cd mcrpo-my-blog-pre
+# Очистка и сборка проекта
+mvn clean package
 
-# 2. Собрать backend
+# Сборка без запуска тестов
+mvn clean package -DskipTests
+
+# Установка в локальный репозиторий Maven
 mvn clean install
+```
 
-# 3. Запустить backend (Jetty)
-mvn jetty:run -Dmaven.test.skip=true
+## Запуск тестов
 
-# Backend запустится на http://localhost:8080
+```bash
+# Запуск всех тестов
+mvn test
 
-# 4. Запустить frontend (в другом терминале, опционально)
-# ⚠️ Требуется Node.js 18+ и npm
-# Установка: brew install node (macOS) или https://nodejs.org
+# Запуск конкретного тестового класса
+mvn test -Dtest=PostServiceTest
 
+# Запуск с выводом в консоль
+mvn test -Dtest=PostServiceTest -DfailIfNoTests=false
+```
+
+### Структура тестов
+
+- **Unit-тесты** (`src/test/java/com/myblog/service/`) — тесты сервисов с использованием Mockito
+- **Интеграционные тесты** (`src/test/java/com/myblog/controller/`) — тесты REST API через MockMvc
+- **Репозиторные тесты** (`src/test/java/com/myblog/repository/`) — тесты Spring Data JDBC репозиториев
+
+## Запуск приложения
+
+### Способ 1: Через Maven (рекомендуется для разработки)
+
+```bash
+mvn spring-boot:run
+```
+
+Приложение будет доступно по адресу: `http://localhost:8080/api`
+
+### Способ 2: Через JAR-файл
+
+```bash
+# Сначала соберите проект
+mvn clean package
+
+# Запустите JAR
+java -jar target/my-blog-back-app-1.0.0.jar
+```
+
+### Способ 3: Из IDE
+
+Запустите класс `com.myblog.MyBlogBackAppApplication` напрямую из IDE.
+
+## Конфигурация
+
+### База данных
+
+Приложение использует H2 in-memory базу данных. Конфигурация находится в `src/main/resources/application.properties`:
+
+```properties
+spring.datasource.url=jdbc:h2:mem:blogdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+spring.datasource.username=sa
+spring.datasource.password=
+```
+
+### H2 Console
+
+Для отладки доступна H2 Console: `http://localhost:8080/api/h2-console`
+
+- JDBC URL: `jdbc:h2:mem:blogdb`
+- User: `sa`
+- Password: (пусто)
+
+## API Endpoints
+
+### Посты
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| GET | `/posts` | Получить список всех постов |
+| GET | `/posts/{id}` | Получить пост по ID |
+| POST | `/posts` | Создать новый пост |
+| PUT | `/posts/{id}` | Обновить пост |
+| DELETE | `/posts/{id}` | Удалить пост |
+| POST | `/posts/{id}/likes` | Поставить лайк посту |
+| DELETE | `/posts/{id}/likes` | Убрать лайк с поста |
+
+### Комментарии
+
+| Метод | Endpoint | Описание |
+|-------|----------|----------|
+| GET | `/posts/{postId}/comments` | Получить комментарии к посту |
+| POST | `/posts/{postId}/comments` | Добавить комментарий |
+| PUT | `/posts/{postId}/comments/{commentId}` | Обновить комментарий |
+| DELETE | `/posts/{postId}/comments/{commentId}` | Удалить комментарий |
+
+## Frontend
+
+Frontend находится в директории `frontend/`. Для запуска:
+
+```bash
 cd frontend
 npm install
 npm run dev
-
-# Frontend запустится на http://localhost:3000
-# Или тестируйте backend через curl/Postman
 ```
 
----
+Frontend запускается на `http://localhost:3000`
 
-## 🛠 Технологии
-
-- Java 17
-- Spring Framework 6.1+
-- Maven
-- H2 Database
-- JUnit 5 + Mockito
-- Tomcat 11
-
----
-
-## 📖 Документация
-
-- **[ЗАДАНИЕ_ДЛЯ_СТУДЕНТОВ.md](./ЗАДАНИЕ_ДЛЯ_СТУДЕНТОВ.md)** — полное описание задания
-- **[TODO_TASKS.md](./TODO_TASKS.md)** — краткий чек-лист
-- **[README_СТУДЕНТЫ.md](./README_СТУДЕНТЫ.md)** — техническая документация
-
----
-
-## ❓ Часто задаваемые вопросы
-
-### Как найти все TODO?
+## Проверка работы
 
 ```bash
-grep -rn "TODO:" src/
+# Получить список постов
+curl http://localhost:8080/api/posts
+
+# Создать пост
+curl -X POST http://localhost:8080/api/posts \
+  -H "Content-Type: application/json" \
+  -d '{"title":"Test","text":"Content","tags":["tag1"]}'
+
+# Поставить лайк
+curl -X POST http://localhost:8080/api/posts/1/likes
 ```
-
-### Как запустить только тесты?
-
-```bash
-mvn test
-```
-
-### Как проверить endpoint через curl?
-
-```bash
-curl http://localhost:8080/api/posts/1/likes -X POST
-```
-
-### Что делать, если застрял?
-
-1. Прочитайте существующий код — все TODO методы похожи на уже реализованные
-2. Читайте логи Tomcat — ошибки видны в консоли
-3. Смотрите БД через H2 консоль: http://localhost:8080/h2-console
-
----
-
-## 🎓 Успехов!
-
-**Помните:** Цель не просто сделать, а **научиться**!
-
-Изучайте существующий код, экспериментируйте, задавайте вопросы.
-
----
-
-**Удачи! 🚀**
